@@ -576,7 +576,6 @@
                 );
 
             if (considerationsEl) {
-
                 considerationsEl.innerHTML = '';
 
                 var considerations =
@@ -584,17 +583,7 @@
                         ? data.considerations
                         : [];
 
-                if (considerations.length === 0) {
-
-                    considerations = [
-                        'Check the applicable jurisdiction and IP requirements.',
-                        'Review the relevant prior-art or existing-knowledge records.',
-                        'Check whether any traditional-knowledge or TKDL considerations apply.'
-                    ];
-                }
-
                 considerations.forEach(function (item) {
-
                     var li =
                         document.createElement('li');
 
