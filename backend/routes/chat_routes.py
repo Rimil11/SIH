@@ -17,7 +17,14 @@ from backend.classification.classifier import classify_query
 
 chat_bp = Blueprint("chat", __name__)
 
+
 def _build_considerations(classification):
+    """
+    Convert classification routing checks into
+    user-friendly "what should be checked" items
+    for the frontend.
+    """
+
     if not classification:
         return []
 
@@ -27,65 +34,92 @@ def _build_considerations(classification):
     ip_type = classification.get("ip_type")
     checks = classification.get("checks") or {}
 
+    # Jurisdiction
     if jurisdiction and jurisdiction != "unknown":
         considerations.append(
-            f"Jurisdiction: {jurisdiction}."
+            f"Jurisdiction: Check the applicable IP and regulatory "
+            f"requirements for {jurisdiction}."
         )
 
-    if ip_type and ip_type != "unknown":
-        considerations.append(
-            f"Relevant IP category: {ip_type}."
-        )
-
-    if checks.get("product_classification"):
-        considerations.append(
-            "Product classification may be relevant."
-        )
-
+    # Patentability
     if checks.get("patent"):
         considerations.append(
-            "Patentability considerations may be relevant."
+            "Patentability: Check novelty, inventive step "
+            "(non-obviousness), and industrial applicability."
         )
 
+    # Prior art
     if checks.get("prior_art"):
         considerations.append(
-            "Prior-art considerations may be relevant."
+            "Prior art: Check whether the invention, formulation, "
+            "or process has already been disclosed or is already known."
         )
 
+    # Traditional knowledge / TKDL
     if checks.get("tkdl"):
         considerations.append(
-            "Traditional Knowledge / TKDL considerations may be relevant."
+            "Traditional knowledge: Check whether the subject matter "
+            "is already documented in traditional knowledge sources "
+            "such as TKDL."
         )
 
-    if checks.get("abs"):
+    # Product classification
+    if checks.get("product_classification"):
         considerations.append(
-            "Access and Benefit-Sharing considerations may be relevant."
+            "Product classification: Determine the applicable "
+            "classification of the Ayurvedic product or formulation."
         )
 
+    # Regulatory
     if checks.get("regulatory"):
         considerations.append(
-            "Applicable regulatory requirements may need to be checked."
+            "Regulatory requirements: Check the applicable AYUSH "
+            "and other regulatory requirements for the product."
         )
 
+    # ABS
+    if checks.get("abs"):
+        considerations.append(
+            "Access and Benefit-Sharing: Check whether biodiversity "
+            "and ABS requirements apply to the biological resource."
+        )
+
+    # Trademark
     if checks.get("trademark"):
         considerations.append(
-            "Trademark protection may be relevant."
+            "Trademark: Check whether the proposed name, brand, or "
+            "logo is available for trademark protection."
         )
 
+    # Design
     if checks.get("design"):
         considerations.append(
-            "Design protection may be relevant."
+            "Design protection: Check whether the visual appearance "
+            "or packaging qualifies for design protection."
         )
 
+    # Trade secret
     if checks.get("trade_secret"):
         considerations.append(
-            "Trade-secret considerations may be relevant."
+            "Trade secret: Check whether confidential information, "
+            "formulas, or processes should be protected as trade secrets."
         )
 
+    # International
     if checks.get("international"):
         considerations.append(
-            "International IP requirements may be relevant."
+            "International protection: Check the applicable "
+            "international filing or protection framework."
         )
+
+    # Generic patent fallback
+    if not considerations and ip_type == "patent":
+        considerations.extend([
+            "Patentability: Check novelty, inventive step "
+            "(non-obviousness), and industrial applicability.",
+            "Prior art: Check whether the invention has already "
+            "been disclosed or is already known.",
+        ])
 
     return considerations
 
@@ -158,96 +192,6 @@ def _save_assistant_message(
         assistant_message.content[:100]
     )
 
-def _build_considerations(classification):
-    """
-    Convert classification routing checks into
-    user-friendly considerations for the frontend.
-    """
-
-    if not classification:
-        return []
-
-    considerations = []
-
-    jurisdiction = classification.get(
-        "jurisdiction"
-    )
-
-    ip_type = classification.get(
-        "ip_type"
-    )
-
-    checks = classification.get(
-        "checks",
-        {}
-    )
-
-    # Jurisdiction
-    if jurisdiction:
-        considerations.append(
-            f"Jurisdiction selected: {jurisdiction}."
-        )
-
-    # IP category
-    if ip_type and ip_type != "unknown":
-        considerations.append(
-            f"Relevant IP category: {ip_type}."
-        )
-
-    # Individual checks
-
-    if checks.get("product_classification"):
-        considerations.append(
-            "Product classification may be relevant to this query."
-        )
-
-    if checks.get("patent"):
-        considerations.append(
-            "Patentability considerations may be relevant."
-        )
-
-    if checks.get("prior_art"):
-        considerations.append(
-            "Prior-art considerations may be relevant."
-        )
-
-    if checks.get("tkdl"):
-        considerations.append(
-            "Traditional Knowledge / TKDL considerations may be relevant."
-        )
-
-    if checks.get("abs"):
-        considerations.append(
-            "Access and Benefit-Sharing considerations may be relevant."
-        )
-
-    if checks.get("regulatory"):
-        considerations.append(
-            "Regulatory requirements may need to be considered."
-        )
-
-    if checks.get("trademark"):
-        considerations.append(
-            "Trademark protection may be relevant."
-        )
-
-    if checks.get("design"):
-        considerations.append(
-            "Design protection may be relevant."
-        )
-
-    if checks.get("trade_secret"):
-        considerations.append(
-            "Trade-secret considerations may be relevant."
-        )
-
-    if checks.get("international"):
-        considerations.append(
-            "International IP frameworks may be relevant."
-        )
-
-    return considerations
-
 
 @chat_bp.route("/chat", methods=["POST"])
 @jwt_required()
@@ -291,7 +235,10 @@ def chat():
 
         start = time.time()
 
+        # =========================================================
         # 1. CLASSIFICATION
+        # =========================================================
+
         classification, classification_confidence = classify_query(
             message
         )
@@ -301,7 +248,10 @@ def chat():
             classification
         )
 
+        # =========================================================
         # 2. HYBRID RETRIEVAL
+        # =========================================================
+
         results = hybrid_search(
             message,
             k=8,
@@ -314,6 +264,10 @@ def chat():
             round(time.time() - start, 2),
             "sec"
         )
+
+        # =========================================================
+        # NO RETRIEVAL RESULTS
+        # =========================================================
 
         if not results:
 
@@ -340,10 +294,16 @@ def chat():
                 "classification_confidence": (
                     classification_confidence
                 ),
+                "considerations": _build_considerations(
+                    classification
+                ),
                 "language": language
             })
 
+        # =========================================================
         # 3. RERANKING
+        # =========================================================
+
         reranked_results = rerank_documents(
             message,
             results,
@@ -355,6 +315,10 @@ def chat():
             round(time.time() - start, 2),
             "sec"
         )
+
+        # =========================================================
+        # NO RERANKED RESULTS
+        # =========================================================
 
         if not reranked_results:
 
@@ -374,9 +338,9 @@ def chat():
             return jsonify({
                 "success": True,
                 "conversation_id": conversation.id,
-                "answer": answer,
-                "citations": citations,
-                "confidence": confidence,
+                "answer": no_info_answer,
+                "citations": [],
+                "confidence": 0.0,
                 "classification": classification,
                 "classification_confidence": (
                     classification_confidence
@@ -386,8 +350,11 @@ def chat():
                 ),
                 "language": language
             })
-        
+
+        # =========================================================
         # 4. GENERATE ANSWER
+        # =========================================================
+
         answer, source_citations = generate_answer(
             message,
             reranked_results,
@@ -401,7 +368,10 @@ def chat():
             "sec"
         )
 
+        # =========================================================
         # 5. VALIDATE CITATIONS
+        # =========================================================
+
         documents = [
             document
             for document, score in reranked_results
@@ -412,7 +382,10 @@ def chat():
             documents
         )
 
+        # =========================================================
         # 6. BUILD CITATIONS
+        # =========================================================
+
         citations = []
 
         for number in validation["valid_citations"]:
@@ -441,7 +414,10 @@ def chat():
                 )
             })
 
+        # =========================================================
         # 7. CONFIDENCE
+        # =========================================================
+
         confidence = calculate_confidence(
             reranked_results,
             citation_valid=validation["valid"]
@@ -453,7 +429,10 @@ def chat():
             "sec"
         )
 
+        # =========================================================
         # 8. SAVE ASSISTANT MESSAGE
+        # =========================================================
+
         _save_assistant_message(
             conversation.id,
             answer,
@@ -463,7 +442,10 @@ def chat():
             language=language
         )
 
+        # =========================================================
         # 9. RESPONSE
+        # =========================================================
+
         return jsonify({
             "success": True,
             "conversation_id": conversation.id,
@@ -473,6 +455,9 @@ def chat():
             "classification": classification,
             "classification_confidence": (
                 classification_confidence
+            ),
+            "considerations": _build_considerations(
+                classification
             ),
             "language": language
         })
