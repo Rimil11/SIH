@@ -225,6 +225,12 @@
                                     confidence:
                                         message.confidence ?? 0,
 
+                                    considerations:
+                                        message.considerations || [],
+
+                                    classification:
+                                        message.classification || {},
+
                                     sources:
                                         citations.map(
                                             function (citation) {
@@ -571,19 +577,34 @@
 
             if (considerationsEl) {
 
-                (data.considerations || [])
-                    .forEach(function (item) {
+                considerationsEl.innerHTML = '';
 
-                        var li =
-                            document.createElement('li');
+                var considerations =
+                    Array.isArray(data.considerations)
+                        ? data.considerations
+                        : [];
 
-                        li.textContent = item;
+                if (considerations.length === 0) {
 
-                        li.style.marginBottom =
-                            '6px';
+                    considerations = [
+                        'Check the applicable jurisdiction and IP requirements.',
+                        'Review the relevant prior-art or existing-knowledge records.',
+                        'Check whether any traditional-knowledge or TKDL considerations apply.'
+                    ];
+                }
 
-                        considerationsEl.appendChild(li);
-                    });
+                considerations.forEach(function (item) {
+
+                    var li =
+                        document.createElement('li');
+
+                    li.textContent = item;
+
+                    li.style.marginBottom = '10px';
+                    li.style.lineHeight = '1.5';
+
+                    considerationsEl.appendChild(li);
+                });
             }
 
             var sourcesEl =
