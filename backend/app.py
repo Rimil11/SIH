@@ -213,11 +213,11 @@ def handle_error(error):
 # ============================================================
 
 if __name__ == "__main__":
-
     app.run(
         host="127.0.0.1",
-        port=Config.PORT,
-        debug=False
+        port=5000,
+        debug=True,
+        use_reloader=True
     )
 
 # from flask import Flask, jsonify,render_template, request, send_from_directory

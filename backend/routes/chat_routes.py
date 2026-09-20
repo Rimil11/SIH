@@ -17,6 +17,78 @@ from backend.classification.classifier import classify_query
 
 chat_bp = Blueprint("chat", __name__)
 
+def _build_considerations(classification):
+    if not classification:
+        return []
+
+    considerations = []
+
+    jurisdiction = classification.get("jurisdiction")
+    ip_type = classification.get("ip_type")
+    checks = classification.get("checks") or {}
+
+    if jurisdiction and jurisdiction != "unknown":
+        considerations.append(
+            f"Jurisdiction: {jurisdiction}."
+        )
+
+    if ip_type and ip_type != "unknown":
+        considerations.append(
+            f"Relevant IP category: {ip_type}."
+        )
+
+    if checks.get("product_classification"):
+        considerations.append(
+            "Product classification may be relevant."
+        )
+
+    if checks.get("patent"):
+        considerations.append(
+            "Patentability considerations may be relevant."
+        )
+
+    if checks.get("prior_art"):
+        considerations.append(
+            "Prior-art considerations may be relevant."
+        )
+
+    if checks.get("tkdl"):
+        considerations.append(
+            "Traditional Knowledge / TKDL considerations may be relevant."
+        )
+
+    if checks.get("abs"):
+        considerations.append(
+            "Access and Benefit-Sharing considerations may be relevant."
+        )
+
+    if checks.get("regulatory"):
+        considerations.append(
+            "Applicable regulatory requirements may need to be checked."
+        )
+
+    if checks.get("trademark"):
+        considerations.append(
+            "Trademark protection may be relevant."
+        )
+
+    if checks.get("design"):
+        considerations.append(
+            "Design protection may be relevant."
+        )
+
+    if checks.get("trade_secret"):
+        considerations.append(
+            "Trade-secret considerations may be relevant."
+        )
+
+    if checks.get("international"):
+        considerations.append(
+            "International IP requirements may be relevant."
+        )
+
+    return considerations
+
 
 def _get_or_create_conversation(
     user_id,
@@ -301,26 +373,20 @@ def chat():
 
             return jsonify({
                 "success": True,
-
                 "conversation_id": conversation.id,
-
                 "answer": answer,
-
                 "citations": citations,
-
                 "confidence": confidence,
-
                 "classification": classification,
-
-                "classification_confidence": classification_confidence,
-
+                "classification_confidence": (
+                    classification_confidence
+                ),
                 "considerations": _build_considerations(
-                        classification
-                    ),
-
-                "language":language
+                    classification
+                ),
+                "language": language
             })
-
+        
         # 4. GENERATE ANSWER
         answer, source_citations = generate_answer(
             message,
