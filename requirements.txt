@@ -17,3 +17,4 @@ rank-bm25
 huggingface_hub>=0.33.5
 
 gunicorn==23.0.0
+sentence-transformers

@@ -1,15 +1,3 @@
-# from langchain_ollama import ChatOllama
-
-
-# def get_llm():
-#     return ChatOllama(
-#         model="qwen3:1.7b",
-#         temperature=0,
-#         think=False,
-#         num_ctx=4096,
-#         num_predict=300,
-#         keep_alive="5m"
-#     )
 import os
 
 from dotenv import load_dotenv
