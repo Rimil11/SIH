@@ -2,55 +2,89 @@ def calculate_confidence(
     results,
     citation_valid=True
 ):
+    """
+    Calculate evidence confidence for the generated answer.
+
+    The reranker currently returns relevance scores in the
+    0-1 range, so we use those scores directly instead of
+    applying arbitrary score buckets.
+
+    This is an evidence-strength indicator, not a calibrated
+    probability.
+    """
+
     if not results:
         return 0.0
 
-    result_count = len(results)
+    # ---------------------------------
+    # 1. Reranker relevance
+    # ---------------------------------
 
-    # More relevant documents = higher evidence strength
+    scores = []
+
+    for _, score in results:
+        try:
+            score = float(score)
+        except (TypeError, ValueError):
+            score = 0.0
+
+        # Reranker is expected to return 0-1.
+        score = max(0.0, min(1.0, score))
+        scores.append(score)
+
+    if not scores:
+        return 0.0
+
+    # Strongest retrieved evidence
+    top_score = scores[0]
+
+    # Average quality of retrieved evidence
+    average_score = sum(scores) / len(scores)
+
+    # ---------------------------------
+    # 2. Evidence coverage
+    # ---------------------------------
+
+    # More supporting documents increase confidence,
+    # but with diminishing returns.
     evidence_score = min(
-        result_count / 5,
+        len(scores) / 5,
         1.0
     )
 
-    # Rank strength
-    rank_weights = []
+    # ---------------------------------
+    # 3. Rank quality
+    # ---------------------------------
 
-    for index in range(result_count):
-        weight = 1 / (index + 1)
-        rank_weights.append(weight)
+    # Give more importance to higher-ranked documents.
+    rank_weights = [
+        1 / (index + 1)
+        for index in range(len(scores))
+    ]
 
     rank_score = (
         sum(rank_weights) /
         len(rank_weights)
     )
 
-    # Reranker score
-    top_score = float(results[0][1])
+    # ---------------------------------
+    # 4. Citation validation
+    # ---------------------------------
 
-    # CrossEncoder scores are not probabilities.
-    # Convert the top score into a bounded strength value.
-    if top_score >= 4:
-        top_strength = 1.0
-    elif top_score >= 2:
-        top_strength = 0.85
-    elif top_score >= 0:
-        top_strength = 0.65
-    elif top_score >= -2:
-        top_strength = 0.40
-    else:
-        top_strength = 0.20
-
-    # Citation validation
     citation_score = (
         1.0 if citation_valid else 0.0
     )
 
+    # ---------------------------------
+    # 5. Final confidence
+    # ---------------------------------
+
     confidence = (
-        (top_strength * 0.40)
-        + (rank_score * 0.20)
-        + (evidence_score * 0.20)
-        + (citation_score * 0.20)
+        (top_score * 0.40)
+        + (average_score * 0.20)
+        + (evidence_score * 0.15)
+        + (rank_score * 0.10)
+        + (citation_score * 0.15)
     )
 
     confidence = max(
