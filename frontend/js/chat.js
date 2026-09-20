@@ -755,33 +755,26 @@
 
                 if (src.url) {
 
-                    item.style.cursor =
-                        'pointer';
+                    item.style.cursor = 'pointer';
 
-                    item.onclick =
-                        function () {
+                    item.onclick = function () {
 
-                            var url =
-                                src.url;
+                        var page =
+                            Number(src.page) || 1;
 
-                            if (
-                                src.page &&
-                                url.indexOf(
-                                    '#page='
-                                ) === -1
-                            ) {
+                        var viewerUrl =
+                            '../pdfjs/web/viewer.html?file=' +
+                            encodeURIComponent(src.url) +
+                            '#page=' +
+                            page +
+                            '&zoom=page-width';
 
-                                url +=
-                                    '#page=' +
-                                    src.page;
-                            }
-
-                            window.open(
-                                url,
-                                '_blank',
-                                'noopener,noreferrer'
-                            );
-                        };
+                        window.open(
+                            viewerUrl,
+                            '_blank',
+                            'noopener,noreferrer'
+                        );
+                    };
                 }
 
                 container.appendChild(item);
@@ -957,8 +950,21 @@
                     data.sources[0].url
                 ) {
 
+                    var source =
+                        data.sources[0];
+
+                    var page =
+                        Number(source.page) || 1;
+
+                    var viewerUrl =
+                        '../pdfjs/web/viewer.html?file=' +
+                        encodeURIComponent(source.url) +
+                        '#page=' +
+                        page +
+                        '&zoom=page-width';
+
                     window.open(
-                        data.sources[0].url,
+                        viewerUrl,
                         '_blank',
                         'noopener,noreferrer'
                     );
