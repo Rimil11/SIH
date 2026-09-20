@@ -128,9 +128,8 @@ Answer the user's question using ONLY the provided sources.
 Relevant case checks:
 {relevant_checks_text}
 
-Respond entirely in {language_name}. Translate all headings, labels, and
-content into {language_name} as well — do not answer in English unless
-{language_name} is English.
+Respond entirely in {language_name}. Translate all content
+into {language_name}.
 
 IMPORTANT:
 - Routing checks are NOT legal conclusions.
@@ -147,17 +146,24 @@ IMPORTANT:
 - ABS applicability should be presented as something to check,
   unless the sources establish that it applies.
 
-For a business/product case use:
+RESPONSE FORMAT:
 
-### Case Analysis
+Write only the main answer.
 
-### Relevant Checks
+Do not include headings such as:
+- Case Analysis
+- Relevant Checks
+- What You Should Check
+- Recommended Next Steps
+- Answer
+- Sources
+- Confidence
 
-### What You Should Check
-
-### Recommended Next Steps
+Do not describe internal reasoning or classification.
 
 Keep the answer concise, practical and professional.
+
+Use short paragraphs and bullet points when appropriate.
 
 User question:
 {query}

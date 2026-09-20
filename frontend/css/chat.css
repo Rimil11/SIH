@@ -280,3 +280,34 @@
   content: "";
   margin-top: 6px;
 }
+
+.answer-content {
+    line-height: 1.7;
+}
+
+.answer-content p {
+    margin: 0 0 14px;
+}
+
+.answer-content p:last-child {
+    margin-bottom: 0;
+}
+
+.answer-content h3,
+.answer-content h4,
+.answer-content h5 {
+    margin: 18px 0 8px;
+}
+
+.answer-content li {
+    margin-bottom: 8px;
+}
+
+.source-item {
+    transition: transform 0.15s ease,
+                box-shadow 0.15s ease;
+}
+
+.source-item:hover {
+    transform: translateY(-1px);
+}

@@ -127,40 +127,44 @@ async function sendMessage(
     );
 
     return {
+        success: data.success,
 
-        success:
-            data.success,
+        answer: data.answer || "",
 
-        answer:
-            data.answer || "",
+        confidence: data.confidence ?? 0,
 
-        confidence:
-            data.confidence ?? 0,
+        confidence_level:
+            data.confidence_level || null,
 
         conversation_id:
             data.conversation_id || null,
 
+        considerations:
+            data.considerations || [],
+
+        classification:
+            data.classification || {},
+
+        classification_confidence:
+            data.classification_confidence ?? 0,
+
         sources:
             (data.citations || []).map(
                 function (citation) {
-
                     return {
-
                         document:
                             citation.source ||
+                            citation.document ||
                             "Unknown source",
 
                         page:
-                            citation.page ??
-                            null,
+                            citation.page ?? null,
 
                         section:
-                            citation.section ||
-                            null,
+                            citation.section || null,
 
                         url:
-                            citation.url ||
-                            null
+                            citation.url || null
                     };
                 }
             )

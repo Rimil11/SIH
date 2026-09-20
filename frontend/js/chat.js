@@ -638,17 +638,53 @@
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
-                .replace(/^### (.*)$/gm, '<h5>$1</h5>')
-                .replace(/^## (.*)$/gm, '<h4>$1</h4>')
-                .replace(/^# (.*)$/gm, '<h3>$1</h3>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/^\s*[-•]\s+(.*)$/gm, '<li>$1</li>')
-                .replace(/^\s*(\d+)\.\s+(.*)$/gm,
+
+                // Headings
+                .replace(
+                    /^### (.*)$/gm,
+                    '<h5>$1</h5>'
+                )
+                .replace(
+                    /^## (.*)$/gm,
+                    '<h4>$1</h4>'
+                )
+                .replace(
+                    /^# (.*)$/gm,
+                    '<h3>$1</h3>'
+                )
+
+                // Bold / italic
+                .replace(
+                    /\*\*(.*?)\*\*/g,
+                    '<strong>$1</strong>'
+                )
+                .replace(
+                    /\*(.*?)\*/g,
+                    '<em>$1</em>'
+                )
+
+                // Bullet lists
+                .replace(
+                    /^\s*[-•]\s+(.*)$/gm,
+                    '<li>$1</li>'
+                )
+
+                // Numbered lists
+                .replace(
+                    /^\s*(\d+)\.\s+(.*)$/gm,
                     '<li><strong>$1.</strong> $2</li>'
                 )
-                .replace(/\n\n/g, '<br><br>')
-                .replace(/\n/g, '<br>');
+
+                // Paragraph breaks
+                .replace(
+                    /\n\n+/g,
+                    '<br><br>'
+                )
+
+                .replace(
+                    /\n/g,
+                    '<br>'
+                );
         }
 
         function renderSources(container, sources) {

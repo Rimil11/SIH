@@ -86,6 +86,96 @@ def _save_assistant_message(
         assistant_message.content[:100]
     )
 
+def _build_considerations(classification):
+    """
+    Convert classification routing checks into
+    user-friendly considerations for the frontend.
+    """
+
+    if not classification:
+        return []
+
+    considerations = []
+
+    jurisdiction = classification.get(
+        "jurisdiction"
+    )
+
+    ip_type = classification.get(
+        "ip_type"
+    )
+
+    checks = classification.get(
+        "checks",
+        {}
+    )
+
+    # Jurisdiction
+    if jurisdiction:
+        considerations.append(
+            f"Jurisdiction selected: {jurisdiction}."
+        )
+
+    # IP category
+    if ip_type and ip_type != "unknown":
+        considerations.append(
+            f"Relevant IP category: {ip_type}."
+        )
+
+    # Individual checks
+
+    if checks.get("product_classification"):
+        considerations.append(
+            "Product classification may be relevant to this query."
+        )
+
+    if checks.get("patent"):
+        considerations.append(
+            "Patentability considerations may be relevant."
+        )
+
+    if checks.get("prior_art"):
+        considerations.append(
+            "Prior-art considerations may be relevant."
+        )
+
+    if checks.get("tkdl"):
+        considerations.append(
+            "Traditional Knowledge / TKDL considerations may be relevant."
+        )
+
+    if checks.get("abs"):
+        considerations.append(
+            "Access and Benefit-Sharing considerations may be relevant."
+        )
+
+    if checks.get("regulatory"):
+        considerations.append(
+            "Regulatory requirements may need to be considered."
+        )
+
+    if checks.get("trademark"):
+        considerations.append(
+            "Trademark protection may be relevant."
+        )
+
+    if checks.get("design"):
+        considerations.append(
+            "Design protection may be relevant."
+        )
+
+    if checks.get("trade_secret"):
+        considerations.append(
+            "Trade-secret considerations may be relevant."
+        )
+
+    if checks.get("international"):
+        considerations.append(
+            "International IP frameworks may be relevant."
+        )
+
+    return considerations
+
 
 @chat_bp.route("/chat", methods=["POST"])
 @jwt_required()
@@ -211,15 +301,24 @@ def chat():
 
             return jsonify({
                 "success": True,
+
                 "conversation_id": conversation.id,
-                "answer": no_info_answer,
-                "citations": [],
-                "confidence": 0.0,
+
+                "answer": answer,
+
+                "citations": citations,
+
+                "confidence": confidence,
+
                 "classification": classification,
-                "classification_confidence": (
-                    classification_confidence
-                ),
-                "language": language
+
+                "classification_confidence": classification_confidence,
+
+                "considerations": _build_considerations(
+                        classification
+                    ),
+
+                "language":language
             })
 
         # 4. GENERATE ANSWER
