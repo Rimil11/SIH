@@ -422,6 +422,9 @@ async function checkTraditionalKnowledge(
             result.query ||
             query,
 
+        rewritten_query: 
+            result.rewritten_query || "",
+
         answer:
             result.answer ||
             "",

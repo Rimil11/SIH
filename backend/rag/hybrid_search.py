@@ -113,7 +113,7 @@ def diversify_results(
 def hybrid_search(
     query,
     k=8,
-    min_score=0.65,
+    min_score=0.65, 
     classification=None
 ):
 

@@ -5,6 +5,7 @@ from urllib.parse import quote
 
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
+from backend.ai.query_rewriter import rewrite_query
 from backend.extensions import db
 from backend.models import Conversation, Message
 from backend.rag.hybrid_search import hybrid_search
@@ -236,11 +237,30 @@ def chat():
         start = time.time()
 
         # =========================================================
-        # 1. CLASSIFICATION
+        # 1. QUERY REWRITING
+        # =========================================================
+
+        rewritten_query = rewrite_query(
+            message,
+            language
+        )
+
+        print(
+            "Original Query:",
+            message
+        )
+
+        print(
+            "Rewritten Query:",
+            rewritten_query
+        )
+
+        # =========================================================
+        # 2. CLASSIFICATION
         # =========================================================
 
         classification, classification_confidence = classify_query(
-            message
+            rewritten_query
         )
 
         print(
@@ -249,11 +269,11 @@ def chat():
         )
 
         # =========================================================
-        # 2. HYBRID RETRIEVAL
+        # 3. HYBRID RETRIEVAL
         # =========================================================
 
         results = hybrid_search(
-            message,
+            rewritten_query,
             k=8,
             min_score=0.65,
             classification=classification
@@ -287,6 +307,8 @@ def chat():
             return jsonify({
                 "success": True,
                 "conversation_id": conversation.id,
+                "query": message,
+                "rewritten_query": rewritten_query,
                 "answer": no_info_answer,
                 "citations": [],
                 "confidence": 0.0,
@@ -301,13 +323,13 @@ def chat():
             })
 
         # =========================================================
-        # 3. RERANKING
+        # 4. RERANKING
         # =========================================================
 
         reranked_results = rerank_documents(
-            message,
+            rewritten_query,
             results,
-            top_k=2
+            top_k=5
         )
 
         print(
@@ -338,6 +360,8 @@ def chat():
             return jsonify({
                 "success": True,
                 "conversation_id": conversation.id,
+                "query": message,
+                "rewritten_query": rewritten_query,
                 "answer": no_info_answer,
                 "citations": [],
                 "confidence": 0.0,
@@ -352,9 +376,12 @@ def chat():
             })
 
         # =========================================================
-        # 4. GENERATE ANSWER
+        # 5. GENERATE ANSWER
         # =========================================================
 
+        # Use the ORIGINAL user question for answer generation.
+        # The rewritten query was already used for:
+        # classification -> retrieval -> reranking.
         answer, source_citations = generate_answer(
             message,
             reranked_results,
@@ -369,7 +396,7 @@ def chat():
         )
 
         # =========================================================
-        # 5. VALIDATE CITATIONS
+        # 6. VALIDATE CITATIONS
         # =========================================================
 
         documents = [
@@ -383,7 +410,7 @@ def chat():
         )
 
         # =========================================================
-        # 6. BUILD CITATIONS
+        # 7. BUILD CITATIONS
         # =========================================================
 
         citations = []
@@ -415,7 +442,7 @@ def chat():
             })
 
         # =========================================================
-        # 7. CONFIDENCE
+        # 8. CONFIDENCE
         # =========================================================
 
         confidence = calculate_confidence(
@@ -430,7 +457,7 @@ def chat():
         )
 
         # =========================================================
-        # 8. SAVE ASSISTANT MESSAGE
+        # 9. SAVE ASSISTANT MESSAGE
         # =========================================================
 
         _save_assistant_message(
@@ -443,10 +470,12 @@ def chat():
         )
 
         # =========================================================
-        # 9. RESPONSE
+        # 10. RESPONSE
         # =========================================================
 
         return jsonify({
+            "query": message,
+            "rewritten_query": rewritten_query,
             "success": True,
             "conversation_id": conversation.id,
             "answer": answer,
